@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aplicar · Emergency Andorra</title>
+<link rel="icon" type="image/png" href="EA.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{--bg:#0B0D11;--panel:#14181F;--panel2:#0F131A;--border:rgba(255,255,255,.09);--border2:rgba(255,255,255,.14);
+--text:#EAEDF1;--muted:#868E9C;--muted2:#9AA2AF;--dim:#5A626E;--accent:#E63329;--green:#2FAE5E;--green2:#46D985;
+--amber:#E0871A;--amber2:#E6A94F;--blue:#2563EB;--red:#E5484D;
+--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;--head:'Oswald',sans-serif;}
+*{box-sizing:border-box;}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);}
+button,input,textarea,select{font-family:var(--sans);}
+button{cursor:pointer;}
+.wrap{min-height:100vh;display:flex;flex-direction:column;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--border);
+background:rgba(11,13,17,.9);position:sticky;top:0;z-index:10;}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand .logo{width:120px;height:48px;background:url('EA.png') left center/contain no-repeat;}
+.timer{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--amber2);background:rgba(224,135,26,.1);
+border:1px solid rgba(224,135,26,.3);border-radius:9px;padding:8px 14px;}
+.timer.urgent{color:#FF9B97;border-color:rgba(229,72,77,.4);background:rgba(229,72,77,.1);}
+.steps{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--border);padding:0 22px;background:var(--panel2);}
+.step-tab{padding:13px 18px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+color:var(--dim);border-bottom:2px solid transparent;white-space:nowrap;cursor:default;}
+.step-tab.active{color:var(--accent);border-color:var(--accent);}
+.step-tab.done{color:var(--green2);}
+.content{flex:1;max-width:760px;margin:0 auto;padding:32px 20px 60px;width:100%;}
+.hero{text-align:center;margin-bottom:26px;}
+.hero .logo-big{width:220px;height:88px;margin:0 auto 14px;background:url('EA.png') center/contain no-repeat;}
+h1{font-family:var(--head);font-weight:700;font-size:26px;text-transform:uppercase;letter-spacing:.5px;margin:0 0 8px;}
+.sub{color:var(--muted2);font-size:13.5px;line-height:1.55;max-width:560px;margin:0 auto;}
+.section{display:none;}
+.section.active{display:block;animation:fade .25s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+.field{margin-bottom:16px;}
+label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+input[type=text],input[type=date],input[type=number],input[type=url],textarea,select{
+width:100%;box-sizing:border-box;background:var(--panel2);border:1px solid var(--border2);border-radius:9px;
+padding:12px 14px;color:var(--text);font-size:14px;outline:none;transition:border-color .15s;}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);}
+textarea{min-height:100px;resize:vertical;line-height:1.5;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.chips{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{background:var(--panel2);border:1px solid var(--border2);border-radius:999px;padding:9px 15px;font-size:13px;
+color:var(--muted2);cursor:pointer;transition:all .15s;}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+.case-box{background:var(--panel2);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 16px;margin-bottom:10px;}
+.case-box b{display:block;color:var(--accent);font-size:13px;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px;}
+.case-box p{margin:0;font-size:13px;color:var(--muted2);line-height:1.55;}
+.nav-btns{display:flex;justify-content:space-between;align-items:center;margin-top:26px;gap:10px;}
+.btn{border:none;border-radius:10px;padding:13px 24px;font-family:var(--mono);font-weight:700;font-size:12px;
+letter-spacing:1px;text-transform:uppercase;transition:all .15s;}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border2);}
+.btn-acc{background:var(--accent);color:#fff;}
+.btn-green{background:var(--green);color:#06210F;}
+.err{background:rgba(229,72,77,.1);border:1px solid rgba(229,72,77,.35);color:#FF9B97;border-radius:9px;
+padding:11px 14px;font-size:13px;margin-bottom:16px;}
+.login-box{max-width:380px;margin:60px auto;background:var(--panel2);border:1px solid var(--border);border-radius:14px;
+padding:30px 26px;text-align:center;}
+.login-box p{color:var(--muted);font-size:13.5px;margin-bottom:20px;}
+.discord-btn{display:inline-flex;align-items:center;gap:10px;background:#5865F2;color:#fff;border:none;border-radius:11px;
+padding:13px 22px;font-family:var(--mono);font-weight:700;font-size:12.5px;letter-spacing:1px;text-transform:uppercase;}
+.success{text-align:center;padding:60px 20px;}
+.success .icon{font-size:52px;margin-bottom:16px;}
+.success h2{font-family:var(--head);font-weight:700;font-size:24px;text-transform:uppercase;margin:0 0 12px;}
+.success p{color:var(--muted2);max-width:480px;margin:0 auto;line-height:1.6;}
+.progress{height:4px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin-bottom:20px;}
+.progress-fill{height:100%;background:var(--accent);transition:width .3s ease;}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.15);border-top-color:var(--accent);
+animation:sp .7s linear infinite;display:inline-block;}
+@keyframes sp{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div class="wrap" id="root"></div>
+
+<script>
+const SUPABASE_URL = 'https://nclgffunnxcinowdmkeh.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_vezGfrelrpIMXHGVusxZVg_4MS0KCJ2';
+let supa = null;
+let SESSION = null;
+let UI = { step: 0, sending: false, error: '', success: false, timerSecs: 3*3600 };
+const F = { nombre:'',discord_username:'',discord_id:'',roblox:'',roblox_id:'',roblox_url:'',
+  fecha_nacimiento:'',edad:'',genero:'',pais_nacimiento:'',pais_residencia:'',nacionalidad:'',
+  nivel_espanol:'',nivel_ingles:'',otros_idiomas:'',microfono:'',horas_semana:'',disponibilidad:[],
+  sobre_ti:'',ha_moderado:'',experiencia_previa:'',motivacion:'',habilidades:'',gestion_carga:'',
+  caso1:'',caso2:'',caso3:'',perjudica:'' };
+
+const STEPS = ['Datos personales','Idiomas y disponibilidad','Experiencia y motivación','Casos prácticos','Historial y honestidad'];
+
+function esc(s){ const d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; }
+function render(){
+  const root = document.getElementById('root');
+  root.innerHTML = '';
+  root.appendChild(buildTop());
+  if (!SESSION){ root.appendChild(buildLogin()); return; }
+  if (UI.success){ root.appendChild(buildSuccess()); return; }
+  root.appendChild(buildSteps());
+  const content = document.createElement('div'); content.className='content';
+  content.appendChild(buildHero());
+  const prog = document.createElement('div'); prog.className='progress';
+  prog.innerHTML = `<div class="progress-fill" style="width:${((UI.step+1)/STEPS.length*100)}%"></div>`;
+  content.appendChild(prog);
+  if (UI.error){ const e=document.createElement('div'); e.className='err'; e.textContent=UI.error; content.appendChild(e); }
+  content.appendChild(buildSection());
+  content.appendChild(buildNav());
+  root.appendChild(content);
+}
+
+function buildTop(){
+  const d = document.createElement('div'); d.className='topbar';
+  const mins = Math.floor(UI.timerSecs/60), h=Math.floor(mins/60), m=mins%60, s=UI.timerSecs%60;
+  const urgent = UI.timerSecs <= 900;
+  d.innerHTML = `<div class="brand"><div class="logo"></div><span style="font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);">Postulaciones · Marc Productions</span></div>
+    ${SESSION && !UI.success ? `<div class="timer ${urgent?'urgent':''}">⏱ ${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</div>` : ''}`;
+  return d;
+}
+
+function buildSteps(){
+  if (!SESSION || UI.success) { const e=document.createElement('div'); return e; }
+  const d = document.createElement('div'); d.className='steps';
+  d.innerHTML = STEPS.map((s,i)=>`<div class="step-tab ${i===UI.step?'active':(i<UI.step?'done':'')}">${i+1}. ${esc(s)}</div>`).join('');
+  return d;
+}
+
+function buildLogin(){
+  const d = document.createElement('div');
+  d.innerHTML = `<div class="login-box">
+    <div style="width:64px;height:64px;margin:0 auto 16px;background:url('EA.png') center/contain no-repeat;"></div>
+    <h1 style="font-size:20px;">Acceso de candidatos</h1>
+    <p>Inicia sesión con Discord para poder rellenar tu solicitud de moderador para Emergency Andorra.</p>
+    <button class="discord-btn" id="login_btn">Iniciar sesión con Discord</button>
+  </div>`;
+  setTimeout(()=>{ document.getElementById('login_btn').onclick = loginDiscord; },0);
+  return d;
+}
+
+function buildHero(){
+  const d = document.createElement('div'); d.className='hero';
+  d.innerHTML = `<h1>Solicitud de Moderator Trainee</h1>
+    <p class="sub">Rellena con sinceridad todas las secciones. El formulario está cronometrado (máx. 3 horas) y se revisará por el equipo de Emergency Andorra.</p>`;
+  return d;
+}
+
+function chip(list, val, label){
+  const on = list.indexOf(val) >= 0;
+  return `<span class="chip ${on?'on':''}" data-val="${esc(val)}">${esc(label)}</span>`;
+}
+
+function buildSection(){
+  const d = document.createElement('div'); d.className='section active';
+  if (UI.step === 0){
+    d.innerHTML = `
+      <div class="field"><label>Nombre o apodo</label><input type="text" id="f_nombre" value="${esc(F.nombre)}"></div>
+      <div class="row2">
+        <div class="field"><label>Usuario de Discord (automático)</label><input type="text" id="f_discord" value="${esc(F.discord_username)}" disabled></div>
+        <div class="field"><label>ID de Discord (automático)</label><input type="text" id="f_discord_id" value="${esc(F.discord_id)}" disabled></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Usuario de Roblox</label><input type="text" id="f_roblox" value="${esc(F.roblox)}"></div>
+        <div class="field"><label>Enlace del perfil de Roblox</label><input type="url" id="f_roblox_url" value="${esc(F.roblox_url)}" placeholder="https://www.roblox.com/users/..."></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Fecha de nacimiento</label><input type="date" id="f_fecha" value="${esc(F.fecha_nacimiento)}"></div>
+        <div class="field"><label>Edad actual</label><input type="number" id="f_edad" min="10" max="99" value="${esc(F.edad)}"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>País de nacimiento</label><input type="text" id="f_pn" value="${esc(F.pais_nacimiento)}"></div>
+        <div class="field"><label>País de residencia actual</label><input type="text" id="f_pr" value="${esc(F.pais_residencia)}"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Nacionalidad</label><input type="text" id="f_nac" value="${esc(F.nacionalidad)}"></div>
+        <div class="field"><label>Género</label><select id="f_gen">
+          <option value="">Selecciona…</option>
+          <option ${F.genero==='Masculino'?'selected':''}>Masculino</option>
+          <option ${F.genero==='Femenino'?'selected':''}>Femenino</option>
+        </select></div>
+      </div>`;
+  } else if (UI.step === 1){
+    d.innerHTML = `
+      <div class="row2">
+        <div class="field"><label>Nivel de español</label><select id="f_es">
+          <option value="">Selecciona…</option>
+          ${['1 · Básico','2','3 · Intermedio','4','5 · Nativo / Fluido'].map(o=>`<option ${F.nivel_espanol===o?'selected':''}>${o}</option>`).join('')}
+        </select></div>
+        <div class="field"><label>Nivel de inglés</label><select id="f_en">
+          <option value="">Selecciona…</option>
+          ${['1 · Básico','2','3 · Intermedio','4','5 · Nativo / Fluido'].map(o=>`<option ${F.nivel_ingles===o?'selected':''}>${o}</option>`).join('')}
+        </select></div>
+      </div>
+      <div class="field"><label>Otros idiomas (opcional)</label><input type="text" id="f_langs" value="${esc(F.otros_idiomas)}"></div>
+      <div class="field"><label>¿Tienes micrófono y puedes hablar con tu voz real?</label>
+        <div class="chips" id="f_mic">${chip([F.microfono],'Sí','Sí')}${chip([F.microfono],'No','No')}</div>
+      </div>
+      <div class="field"><label>Horas diarias disponibles (promedio)</label><input type="number" id="f_horas" min="0" max="24" value="${esc(F.horas_semana)}"></div>
+      <div class="field"><label>Disponibilidad horaria</label>
+        <div class="chips" id="f_dispo">${['Mañanas','Tardes','Noches','Madrugadas'].map(o=>chip(F.disponibilidad,o,o)).join('')}</div>
+      </div>`;
+  } else if (UI.step === 2){
+    d.innerHTML = `
+      <div class="field"><label>Cuéntanos sobre ti y tu día a día</label><textarea id="f_about">${esc(F.sobre_ti)}</textarea></div>
+      <div class="field"><label>¿Has moderado antes?</label>
+        <div class="chips" id="f_modexp">${chip([F.ha_moderado],'Sí','Sí')}${chip([F.ha_moderado],'No','No')}</div>
+      </div>
+      <div class="field"><label>Detalla tu experiencia en moderación (si aplica)</label><textarea id="f_expdet">${esc(F.experiencia_previa)}</textarea></div>
+      <div class="field"><label>¿Por qué quieres unirte al equipo y qué te hace adecuado/a?</label><textarea id="f_why">${esc(F.motivacion)}</textarea></div>
+      <div class="field"><label>¿Qué habilidades crees que te ayudarán a desempeñar bien este rol?</label><textarea id="f_skills">${esc(F.habilidades)}</textarea></div>
+      <div class="field"><label>En momentos de mucha carga de trabajo, ¿cómo priorizas para resolver todo a tiempo?</label><textarea id="f_prio">${esc(F.gestion_carga)}</textarea></div>`;
+  } else if (UI.step === 3){
+    d.innerHTML = `
+      <div class="case-box"><b>Caso 1</b><p>Un usuario usa hacks para hacer volar a todos los jugadores del servidor. ¿Cómo actúas? Justifícalo paso a paso.</p></div>
+      <div class="field"><textarea id="f_c1">${esc(F.caso1)}</textarea></div>
+      <div class="case-box"><b>Caso 2</b><p>Un usuario choca intencionadamente contra otros con el único propósito de buguear sus vehículos. ¿Cómo lo gestionas?</p></div>
+      <div class="field"><textarea id="f_c2">${esc(F.caso2)}</textarea></div>
+      <div class="case-box"><b>Caso 3</b><p>Un usuario llama a un moderador diciendo que es muy urgente y, al llegar, solo dice «¿cómo puedes ser tú moderador?». ¿Qué haces?</p></div>
+      <div class="field"><textarea id="f_c3">${esc(F.caso3)}</textarea></div>`;
+  } else if (UI.step === 4){
+    d.innerHTML = `
+      <div class="field"><label>¿Hay algo que pueda perjudicar tu candidatura?</label><textarea id="f_perj" placeholder="Escribe «Nada» si no aplica.">${esc(F.perjudica)}</textarea></div>
+      <div style="background:var(--panel2);border:1px solid var(--border);border-radius:11px;padding:16px 18px;font-size:13px;line-height:1.6;color:var(--muted2);">
+        Al enviar confirmas que has rellenado este formulario por ti mismo/a, con sinceridad, y que cumples los requisitos indicados. Proporcionar información falsa conlleva el rechazo de tu candidatura.
+      </div>`;
+  }
+  return d;
+}
+
+function buildNav(){
+  const d = document.createElement('div'); d.className='nav-btns';
+  const last = UI.step === STEPS.length - 1;
+  d.innerHTML = `
+    <button class="btn btn-ghost" id="btn_prev" ${UI.step===0?'style="visibility:hidden"':''}>← Anterior</button>
+    ${last ? `<button class="btn btn-green" id="btn_submit" ${UI.sending?'disabled':''}>${UI.sending?'<span class="spin"></span> Enviando…':'Enviar solicitud'}</button>`
+           : `<button class="btn btn-acc" id="btn_next">Siguiente →</button>`}
+  `;
+  setTimeout(()=>{
+    const p=document.getElementById('btn_prev'); if(p) p.onclick=()=>{ saveStepFields(); UI.step=Math.max(0,UI.step-1); render(); };
+    const n=document.getElementById('btn_next'); if(n) n.onclick=()=>{ saveStepFields(); if(validateStep()){ UI.step++; UI.error=''; render(); } };
+    const s=document.getElementById('btn_submit'); if(s) s.onclick=()=>{ saveStepFields(); if(validateStep()) submitForm(); };
+    wireStepEvents();
+  },0);
+  return d;
+}
+
+function wireStepEvents(){
+  const micWrap = document.getElementById('f_mic');
+  if (micWrap) micWrap.querySelectorAll('.chip').forEach(c=> c.onclick=()=>{ F.microfono = c.dataset.val; render(); });
+  const modWrap = document.getElementById('f_modexp');
+  if (modWrap) modWrap.querySelectorAll('.chip').forEach(c=> c.onclick=()=>{ F.ha_moderado = c.dataset.val; render(); });
+  const dispoWrap = document.getElementById('f_dispo');
+  if (dispoWrap) dispoWrap.querySelectorAll('.chip').forEach(c=> c.onclick=()=>{
+    const v=c.dataset.val; const i=F.disponibilidad.indexOf(v);
+    if(i>=0) F.disponibilidad.splice(i,1); else F.disponibilidad.push(v);
+    render();
+  });
+}
+
+function saveStepFields(){
+  const g=(id)=>{ const el=document.getElementById(id); return el? el.value : undefined; };
+  if (UI.step===0){ F.nombre=g('f_nombre')||''; F.roblox=g('f_roblox')||''; F.roblox_url=g('f_roblox_url')||'';
+    F.fecha_nacimiento=g('f_fecha')||''; F.edad=g('f_edad')||''; F.pais_nacimiento=g('f_pn')||''; F.pais_residencia=g('f_pr')||'';
+    F.nacionalidad=g('f_nac')||''; F.genero=g('f_gen')||''; }
+  else if (UI.step===1){ F.nivel_espanol=g('f_es')||''; F.nivel_ingles=g('f_en')||''; F.otros_idiomas=g('f_langs')||''; F.horas_semana=g('f_horas')||''; }
+  else if (UI.step===2){ F.sobre_ti=g('f_about')||''; F.experiencia_previa=g('f_expdet')||''; F.motivacion=g('f_why')||''; F.habilidades=g('f_skills')||''; F.gestion_carga=g('f_prio')||''; }
+  else if (UI.step===3){ F.caso1=g('f_c1')||''; F.caso2=g('f_c2')||''; F.caso3=g('f_c3')||''; }
+  else if (UI.step===4){ F.perjudica=g('f_perj')||''; }
+}
+
+function validateStep(){
+  if (UI.step===0){ if(!F.nombre.trim()||!F.roblox.trim()||!F.edad||!F.genero){ UI.error='Rellena todos los campos obligatorios de esta sección.'; render(); return false; } }
+  if (UI.step===1){ if(!F.nivel_espanol||!F.nivel_ingles||!F.microfono){ UI.error='Rellena todos los campos obligatorios de esta sección.'; render(); return false; } }
+  if (UI.step===2){ if(!F.sobre_ti.trim()||!F.ha_moderado||!F.motivacion.trim()||!F.habilidades.trim()||!F.gestion_carga.trim()){ UI.error='Rellena todos los campos obligatorios de esta sección.'; render(); return false; } }
+  if (UI.step===3){ if(!F.caso1.trim()||!F.caso2.trim()||!F.caso3.trim()){ UI.error='Responde los tres casos prácticos.'; render(); return false; } }
+  if (UI.step===4){ if(!F.perjudica.trim()){ UI.error='Rellena la última pregunta (escribe "Nada" si no aplica).'; render(); return false; } }
+  UI.error=''; return true;
+}
+
+function buildSuccess(){
+  const d=document.createElement('div'); d.className='content';
+  d.innerHTML = `<div class="success">
+    <div class="icon">✅</div>
+    <h2>¡Solicitud enviada!</h2>
+    <p>Hemos recibido tu solicitud correctamente. El equipo de Emergency Andorra la revisará y el resultado se mostrará en tu perfil. ¡Mucha suerte!</p>
+  </div>`;
+  return d;
+}
+
+async function submitForm(){
+  UI.sending = true; render();
+  const row = {
+    numero: undefined,
+    nombre: F.nombre.trim(), discord_username: SESSION.discord||'', discord_id: SESSION.discord_id||'',
+    roblox: F.roblox.trim(), roblox_id: F.roblox_id||'', roblox_url: F.roblox_url.trim(),
+    fecha_nacimiento: F.fecha_nacimiento||null, edad: F.edad, genero: F.genero,
+    pais_nacimiento: F.pais_nacimiento, pais_residencia: F.pais_residencia, nacionalidad: F.nacionalidad,
+    nivel_espanol: F.nivel_espanol, nivel_ingles: F.nivel_ingles, otros_idiomas: F.otros_idiomas,
+    microfono: F.microfono, horas_semana: F.horas_semana, disponibilidad: F.disponibilidad.join(', '),
+    sobre_ti: F.sobre_ti, ha_moderado: F.ha_moderado, experiencia_previa: F.experiencia_previa,
+    motivacion: F.motivacion, habilidades: F.habilidades, gestion_carga: F.gestion_carga,
+    caso1: F.caso1, caso2: F.caso2, caso3: F.caso3, perjudica: F.perjudica,
+    estado: 'pendiente', tiempo_segundos: (3*3600 - UI.timerSecs)
+  };
+  delete row.numero;
+  try{
+    const { error } = await supa.from('solicitudes').insert(row);
+    if (error){ UI.sending=false; UI.error = 'No se pudo enviar: ' + error.message; render(); return; }
+    UI.sending=false; UI.success=true; render();
+  }catch(e){ UI.sending=false; UI.error='Error de conexión al enviar la solicitud.'; render(); }
+}
+
+function loginDiscord(){
+  if(!supa) return;
+  const redirectTo = window.location.origin + window.location.pathname;
+  supa.auth.signInWithOAuth({ provider:'discord', options:{ redirectTo } });
+}
+
+async function initSupabase(){
+  supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const { data } = await supa.auth.getSession();
+  applySession(data && data.session);
+  supa.auth.onAuthStateChange((_e, session)=> applySession(session));
+}
+function applySession(session){
+  if (!session || !session.user){ SESSION = null; render(); return; }
+  const u = session.user; const m = u.user_metadata || {};
+  SESSION = {
+    id: u.id,
+    discord: m.user_name || m.preferred_username || m.full_name || m.name || '',
+    discord_id: m.provider_id || (u.identities && u.identities[0] && u.identities[0].id) || ''
+  };
+  F.discord_username = SESSION.discord; F.discord_id = SESSION.discord_id;
+  render();
+  if (!window._timerStarted){ window._timerStarted = true; startTimer(); }
+}
+function startTimer(){
+  setInterval(()=>{
+    if (!SESSION || UI.success) return;
+    UI.timerSecs = Math.max(0, UI.timerSecs - 1);
+    render();
+  }, 1000);
+}
+
+initSupabase();
+render();
+</script>
+</body>
+</html>

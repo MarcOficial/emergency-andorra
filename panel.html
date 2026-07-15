@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emergency · Panel de Moderadores</title>
+<link rel="icon" type="EA.png" href="/imagenes/EA.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --bg:#0B0D11; --panel:#14181F; --panel2:#0F131A; --panel3:#0B0E13;
+    --border:rgba(255,255,255,0.09); --border2:rgba(255,255,255,0.14);
+    --text:#EAEDF1; --muted:#868E9C; --muted2:#9AA2AF; --dim:#5A626E;
+    --accent:#E63329; --green:#2FAE5E; --green2:#46D985; --amber:#E0871A; --amber2:#E6A94F;
+    --blue:#2563EB; --red:#E5484D;
+    --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif; --head:'Oswald',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);}
+  ::selection{background:rgba(230,51,41,0.35);}
+  button,input,textarea,select{font-family:var(--sans);}
+  button{cursor:pointer;}
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.14);border-radius:6px;}
+  .app{min-height:100vh;display:flex;justify-content:center;align-items:flex-start;
+       padding:clamp(20px,5vh,52px) 20px;
+       background:radial-gradient(900px 520px at 50% -8%, rgba(230,51,41,0.10), transparent 62%), var(--bg);}
+  .card{position:relative;width:100%;max-width:980px;background:var(--panel);border:1px solid var(--border);
+        border-radius:16px;overflow:hidden;box-shadow:0 30px 80px -24px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.04);}
+  .stripe{height:6px;background:repeating-linear-gradient(135deg,#E63329 0 14px,#1C2129 14px 28px);}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px 14px;flex-wrap:wrap;
+          padding:16px 22px;border-bottom:1px solid var(--border);}
+  .brand{display:flex;align-items:center;gap:14px;}
+  .brand .logo{font-family:var(--head);font-weight:700;font-size:18px;letter-spacing:1px;color:#fff;
+        background:linear-gradient(135deg,var(--accent),#a8231d);padding:6px 12px;border-radius:8px;}
+  .brand .sep{height:26px;width:1px;background:rgba(255,255,255,.12);}
+  .brand .title{font-family:var(--mono);font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--text);}
+  .pill{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+        color:var(--amber2);background:color-mix(in srgb,var(--amber) 14%,transparent);
+        border:1px solid color-mix(in srgb,var(--amber) 40%,transparent);border-radius:999px;padding:3px 9px;}
+  .pill-db{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+        padding:3px 9px;border-radius:999px;}
+  .pill-db.on{color:#46D985;background:color-mix(in srgb,#2FAE5E 15%,transparent);border:1px solid color-mix(in srgb,#2FAE5E 45%,transparent);}
+  .pill-db.off{color:#FF8A86;background:color-mix(in srgb,#E5484D 15%,transparent);border:1px solid color-mix(in srgb,#E5484D 45%,transparent);}
+  .btn{background:transparent;color:var(--muted2);border:1px solid var(--border2);border-radius:8px;
+       padding:8px 14px;font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;
+       transition:all .15s;}
+  .btn:hover{color:var(--text);border-color:rgba(255,255,255,.32);}
+  .btn-acc{background:var(--accent);color:#fff;border:none;}
+  .btn-acc:hover{filter:brightness(1.08);}
+  .btn-green{background:var(--green);color:#06210F;border:none;font-weight:700;}
+  .btn-blue{background:var(--blue);color:#fff;border:none;font-weight:600;}
+  .btn-red{background:var(--red);color:#fff;border:none;font-weight:700;}
+  .content{padding:22px;}
+  .loginbox{max-width:380px;margin:30px auto;background:var(--panel2);border:1px solid var(--border);
+            border-radius:14px;padding:28px 24px;}
+  .loginbox h3{margin:0 0 6px;font-family:var(--head);font-weight:600;font-size:22px;text-transform:uppercase;
+               text-align:center;}
+  .loginbox p{margin:0 0 22px;font-size:13px;line-height:1.5;color:var(--muted);text-align:center;}
+  label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;
+        color:var(--muted);margin-bottom:7px;}
+  input[type=text],input[type=password],input[type=email],input[type=date],input[type=number],input[type=datetime-local],textarea,select{
+    width:100%;box-sizing:border-box;background:var(--panel3);border:1px solid var(--border2);border-radius:9px;
+    padding:12px 14px;color:var(--text);font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s;}
+  input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(230,51,41,.16);}
+  .err{margin:10px 0;background:color-mix(in srgb,var(--red) 12%,var(--panel2));
+       border:1px solid color-mix(in srgb,var(--red) 40%,transparent);border-radius:8px;padding:10px 12px;
+       font-size:12.5px;color:#FF9B97;}
+  .tabs{display:flex;gap:6px;margin-bottom:18px;background:var(--panel2);border:1px solid var(--border);
+        border-radius:10px;padding:4px;width:fit-content;max-width:100%;flex-wrap:wrap;}
+  .tab{background:transparent;color:var(--muted);border:none;border-radius:7px;padding:9px 16px;
+       font-family:var(--mono);font-weight:600;font-size:11.5px;letter-spacing:1px;text-transform:uppercase;
+       transition:all .15s;}
+  .tab.on{background:var(--accent);color:#fff;}
+  .badge{opacity:.7;font-size:10px;margin-left:4px;}
+  .sec-title{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+  .box{background:var(--panel2);border:1px solid var(--border);border-radius:13px;padding:16px 18px;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .filterbtn{background:#0F131A;color:var(--muted);border:1px solid var(--border2);border-radius:8px;
+        padding:8px 13px;font-family:var(--mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;}
+  .filterbtn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .listitem{display:flex;align-items:center;flex-wrap:wrap;gap:9px 13px;padding:14px 16px;background:#0F131A;
+            border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .15s;}
+  .listitem:hover{border-color:rgba(255,255,255,.2);background:#12161E;}
+  .num{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);background:#0B0E13;
+       border:1px solid var(--border2);padding:5px 8px;border-radius:6px;flex:0 0 auto;}
+  .chip{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;
+        padding:5px 9px;border-radius:6px;}
+  .timerbig{font-family:var(--head);font-weight:700;font-size:42px;line-height:1;color:var(--text);letter-spacing:1px;}
+  textarea{min-height:80px;resize:vertical;font-family:var(--sans);line-height:1.5;}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:95;max-width:92vw;
+         background:color-mix(in srgb,var(--amber) 20%,var(--panel2));border:1px solid color-mix(in srgb,var(--amber) 55%,transparent);
+         border-radius:12px;padding:13px 18px;box-shadow:0 16px 40px rgba(0,0,0,.55);font-size:13px;font-weight:600;
+         color:#F0C28A;}
+  .chooser-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;width:100%;max-width:960px;}
+  .chooser-card{text-align:left;background:var(--panel);border:1px solid var(--border2);border-radius:16px;
+        padding:24px 22px;cursor:pointer;transition:all .18s;display:flex;flex-direction:column;gap:10px;}
+  .chooser-card:hover{transform:translateY(-2px);}
+  .chooser-icon{width:44px;height:44px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:21px;}
+  .spin{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.15);border-top-color:var(--accent);
+        animation:sp .7s linear infinite;display:inline-block;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+
+
+.logo-img {
+    height: 70px; /* Ajusta este valor según el alto de tu barra */
+    width: auto;  /* Mantiene la proporción original */
+}
+ 
+</style>
+</head>
+<body>
+<div class="app"><div class="card" id="root"></div></div>
+
+<script>
+/* =========================================================================
+   EMERGENCY · PANEL DE MODERADORES — conectado a Supabase real
+   Login sigue siendo fijo (Marc / Marc123 -> Game Owner). Todos los datos
+   (solicitudes, tickets, turnos, ausencias, baneos, registro) se leen y
+   escriben en tu proyecto real de Supabase.
+   ========================================================================= */
+
+const SUPABASE_URL = 'https://otfolumbriyqhecaxzqe.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_N_6Y3dZle1Z7eC0Oa_8FLQ_duDZrq_Y';
+const ADMIN_USER = 'Marc';
+const ADMIN_PASS = 'Marc123';
+const MY_EMAIL = 'marc@evpanel.local';
+
+let supa = null;
+let dbOk = false;
+
+function nowIso(){ return new Date().toISOString(); }
+function fmtDate(s){ if(!s) return '—'; try{ return new Date(s).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}); }catch(e){ return s; } }
+function fmtHMS(secs){ secs=Math.max(0,Math.floor(secs||0)); const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60; const p=n=>String(n).padStart(2,'0'); return p(h)+':'+p(m)+':'+p(s); }
+function fmtHoras(secs){ secs=Math.max(0,Math.floor(secs||0)); const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60); if(h>0) return h+'h '+String(m).padStart(2,'0')+'m'; return m+'m'; }
+function esc(s){ const d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; }
+
+let SESSION = null; // {user, rango, esDueno}
+let DATA = { solicitudes:[], comentarios:[], tickets:[], turnos:[], turnoActivo:null, ausencias:[], baneos:[], logs:[], equipo:[] };
+let UI = { view:'chooser', console:null, focusId:null, toast:null, ticketFocus:null, ticketMsgs:[], tFilter:'todas', tkFilter:'abierto', search:'', loading:false, loginError:'' };
+
+function showToast(msg){ UI.toast=msg; render(); setTimeout(()=>{ UI.toast=null; render(); },3500); }
+function go(consoleName, view){ UI.console=consoleName; UI.view=view||'main'; UI.focusId=null; UI.ticketFocus=null; render(); loadConsoleData(consoleName); }
+function goChooser(){ UI.console=null; UI.view='chooser'; render(); }
+
+/* ---------- Init Supabase ---------- */
+function initSupabase(){
+  try{
+    supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    dbOk = true;
+  }catch(e){ dbOk = false; }
+}
+
+/* ---------- Auth (local, no Supabase Auth) ---------- */
+function doLogin(){
+  const u = document.getElementById('login_user').value.trim();
+  const p = document.getElementById('login_pass').value;
+  if(u === ADMIN_USER && p === ADMIN_PASS){
+    SESSION = { user:'Marc', email: MY_EMAIL, rango:'game_owner', esDueno:true };
+    writeLog('inició sesión');
+    goChooser();
+  } else {
+    UI.loginError = 'Usuario o contraseña incorrectos.';
+    render();
+  }
+}
+function logout(){
+  writeLog('cerró sesión');
+  SESSION = null;
+  UI = { view:'chooser', console:null, focusId:null, toast:null, ticketFocus:null, ticketMsgs:[], tFilter:'todas', tkFilter:'abierto', search:'', loading:false, loginError:'' };
+  render();
+}
+
+/* ---------- Carga de datos por consola ---------- */
+async function loadConsoleData(consoleName){
+  UI.loading = true; render();
+  try{
+    if(consoleName==='forms'){
+      const { data: sols } = await supa.from('solicitudes').select('*').order('created_at',{ascending:false});
+      const { data: coms } = await supa.from('comentarios').select('*').order('created_at',{ascending:true});
+      DATA.solicitudes = sols || []; DATA.comentarios = coms || [];
+    } else if(consoleName==='tickets'){
+      const { data: tks } = await supa.from('tickets').select('*').order('created_at',{ascending:false});
+      DATA.tickets = tks || [];
+    } else if(consoleName==='gestion'){
+      await loadGestionAll();
+    }
+  }catch(e){ showToast('Error cargando datos de Supabase: '+(e.message||e)); }
+  UI.loading = false; render();
+}
+async function loadGestionAll(){
+  const [{data:turnos},{data:aus},{data:bans},{data:logs},{data:mods}] = await Promise.all([
+    supa.from('turnos').select('*').order('started_at',{ascending:false}),
+    supa.from('ausencias').select('*').order('created_at',{ascending:false}),
+    supa.from('ticket_bans').select('*').order('created_at',{ascending:false}),
+    supa.from('registro').select('*').order('created_at',{ascending:false}).limit(200),
+    supa.from('moderadores').select('*')
+  ]);
+  const all = turnos || [];
+  DATA.turnoActivo = all.find(t=> t.mod_email===MY_EMAIL && (t.status==='activo'||t.status==='pausado')) || null;
+  DATA.turnos = all.filter(t=> t.mod_email===MY_EMAIL && t.status==='terminado');
+  DATA.ausencias = aus || [];
+  DATA.baneos = bans || [];
+  DATA.logs = logs || [];
+  DATA.equipo = mods || [];
+}
+async function writeLog(accion, detalle){
+  const row = { autor: SESSION ? SESSION.user : '—', accion, detalle: detalle||'' };
+  if(dbOk){ try{ await supa.from('registro').insert(row); }catch(e){} }
+}
+
+/* ---------- Solicitudes ---------- */
+async function decideSolicitud(id, estado){
+  const row = DATA.solicitudes.find(x=>x.id===id); if(!row) return;
+  row.estado = estado; row.revisado_por = SESSION.user; render();
+  try{ await supa.from('solicitudes').update({estado, revisado_por: SESSION.user}).eq('id', id); }catch(e){ showToast('No se pudo guardar: '+e.message); }
+  writeLog('cambió el estado de una solicitud a '+estado, row.nombre);
+}
+async function deleteSolicitud(id){
+  const row = DATA.solicitudes.find(x=>x.id===id);
+  DATA.solicitudes = DATA.solicitudes.filter(x=>x.id!==id);
+  UI.focusId = null; render();
+  try{ await supa.from('solicitudes').delete().eq('id', id); }catch(e){}
+  writeLog('borró una solicitud', row ? row.nombre : '');
+}
+async function addComentario(solId, texto){
+  if(!texto.trim()) return;
+  const row = { solicitud_id: solId, autor: SESSION.user, texto: texto.trim() };
+  try{
+    const { data } = await supa.from('comentarios').insert(row).select();
+    if(data && data[0]) DATA.comentarios.push(data[0]);
+  }catch(e){ showToast('No se pudo guardar el comentario.'); }
+  render();
+}
+
+/* ---------- Tickets ---------- */
+async function openTicketDetail(id){
+  UI.ticketFocus = id; UI.ticketMsgs = []; render();
+  try{
+    const { data } = await supa.from('ticket_mensajes').select('*').eq('ticket_id', id).order('created_at',{ascending:true});
+    UI.ticketMsgs = data || [];
+  }catch(e){}
+  render();
+}
+async function closeTicket(id){
+  const tk = DATA.tickets.find(x=>x.id===id); if(!tk) return;
+  tk.estado='cerrado'; tk.cerrado_por = SESSION.user; render();
+  try{ await supa.from('tickets').update({estado:'cerrado', cerrado_por: SESSION.user}).eq('id', id); }catch(e){}
+  writeLog('cerró el ticket #'+tk.numero);
+}
+async function reopenTicket(id){
+  const tk = DATA.tickets.find(x=>x.id===id); if(!tk) return;
+  tk.estado='abierto'; tk.cerrado_por=null; render();
+  try{ await supa.from('tickets').update({estado:'abierto', cerrado_por:null}).eq('id', id); }catch(e){}
+  writeLog('reabrió el ticket #'+tk.numero);
+}
+async function deleteTicket(id){
+  const tk = DATA.tickets.find(x=>x.id===id);
+  DATA.tickets = DATA.tickets.filter(x=>x.id!==id);
+  UI.ticketFocus=null; render();
+  try{ await supa.from('tickets').delete().eq('id', id); }catch(e){}
+  writeLog('borró el ticket #'+(tk?tk.numero:'?'));
+}
+async function createTestTicket(){
+  const row = { motivo:'soporte', asunto:'Ticket de prueba', nombre:'Usuario de prueba', discord:'usuario', estado:'abierto', prioridad:'normal' };
+  try{
+    const { data } = await supa.from('tickets').insert(row).select();
+    if(data && data[0]){
+      DATA.tickets.unshift(data[0]);
+      await supa.from('ticket_mensajes').insert({ ticket_id: data[0].id, tipo:'user', autor:'Usuario de prueba', texto:'Hola, necesito ayuda con esto.' });
+      writeLog('creó un ticket de prueba #'+data[0].numero);
+    }
+  }catch(e){ showToast('No se pudo crear el ticket: '+e.message); }
+  render();
+}
+async function sendTicketReply(id, texto){
+  if(!texto.trim()) return;
+  const row = { ticket_id:id, tipo:'mod', autor: SESSION.user, texto: texto.trim() };
+  try{
+    const { data } = await supa.from('ticket_mensajes').insert(row).select();
+    if(data && data[0]) UI.ticketMsgs.push(data[0]);
+  }catch(e){ showToast('No se pudo enviar la respuesta.'); }
+  const tk = DATA.tickets.find(x=>x.id===id);
+  writeLog('respondió en el ticket #'+(tk?tk.numero:'?'));
+  render();
+}
+
+/* ---------- Turnos (fichaje) ---------- */
+async function empezarTurno(){
+  if(DATA.turnoActivo) return;
+  const row = { mod_email: MY_EMAIL, started_at: nowIso(), status:'activo', break_seconds:0 };
+  try{
+    const { data } = await supa.from('turnos').insert(row).select();
+    if(data && data[0]) DATA.turnoActivo = data[0];
+  }catch(e){ showToast('No se pudo empezar el turno: '+e.message); }
+  writeLog('empezó un turno'); render();
+}
+async function pausarTurno(){
+  const tk = DATA.turnoActivo; if(!tk || tk.status!=='activo') return;
+  tk.status='pausado'; tk.break_started_at = nowIso(); render();
+  try{ await supa.from('turnos').update({status:'pausado', break_started_at: tk.break_started_at}).eq('id', tk.id); }catch(e){}
+}
+async function reanudarTurno(){
+  const tk = DATA.turnoActivo; if(!tk || tk.status!=='pausado') return;
+  const brk = Math.floor((Date.now()-new Date(tk.break_started_at).getTime())/1000);
+  tk.break_seconds=(tk.break_seconds||0)+brk; tk.status='activo'; tk.break_started_at=null; render();
+  try{ await supa.from('turnos').update({status:'activo', break_seconds: tk.break_seconds, break_started_at:null}).eq('id', tk.id); }catch(e){}
+}
+async function terminarTurno(nota){
+  const tk = DATA.turnoActivo; if(!tk) return;
+  const endMs = Date.now();
+  let brk = tk.break_seconds||0;
+  if(tk.status==='pausado' && tk.break_started_at) brk += Math.floor((endMs-new Date(tk.break_started_at).getTime())/1000);
+  const worked = Math.max(0, Math.floor((endMs-new Date(tk.started_at).getTime())/1000) - brk);
+  const patch = { ended_at: nowIso(), worked_seconds: worked, break_seconds: brk, status:'terminado', nota: nota||'' };
+  DATA.turnos.unshift(Object.assign({}, tk, patch));
+  DATA.turnoActivo = null; render();
+  try{ await supa.from('turnos').update(patch).eq('id', tk.id); }catch(e){}
+  writeLog('terminó un turno', fmtHoras(worked));
+}
+function turnoWorkedNow(){
+  const tk = DATA.turnoActivo; if(!tk) return 0;
+  const brk = tk.break_seconds||0;
+  if(tk.status==='pausado') return Math.max(0, Math.floor((new Date(tk.break_started_at).getTime()-new Date(tk.started_at).getTime())/1000)-brk);
+  return Math.max(0, Math.floor((Date.now()-new Date(tk.started_at).getTime())/1000)-brk);
+}
+
+/* ---------- Ausencias ---------- */
+async function solicitarAusencia(desde,hasta,motivo){
+  if(!desde||!hasta) return showToast('Indica las fechas de inicio y fin.');
+  const row = { mod_email: MY_EMAIL, desde, hasta, motivo: motivo||'', estado:'pendiente' };
+  try{
+    const { data } = await supa.from('ausencias').insert(row).select();
+    if(data && data[0]) DATA.ausencias.unshift(data[0]);
+  }catch(e){ showToast('No se pudo guardar: '+e.message); }
+  writeLog('solicitó una ausencia', desde+' → '+hasta); render();
+}
+async function decidirAusencia(id, estado){
+  const a = DATA.ausencias.find(x=>x.id===id); if(!a) return;
+  a.estado = estado; render();
+  try{ await supa.from('ausencias').update({estado}).eq('id', id); }catch(e){}
+  writeLog((estado==='aceptada'?'aceptó':'denegó')+' una ausencia');
+}
+async function borrarAusencia(id){
+  DATA.ausencias = DATA.ausencias.filter(x=>x.id!==id); render();
+  try{ await supa.from('ausencias').delete().eq('id', id); }catch(e){}
+}
+
+/* ---------- Baneos ---------- */
+async function banUser(valor,motivo,dias){
+  if(!valor.trim()) return showToast('Indica a quién banear.');
+  const hasta = dias ? new Date(Date.now()+dias*86400000).toISOString() : null;
+  const row = { valor: valor.trim(), motivo: motivo||'', hasta, por: SESSION.user };
+  try{
+    const { data } = await supa.from('ticket_bans').insert(row).select();
+    if(data && data[0]) DATA.baneos.unshift(data[0]);
+  }catch(e){ showToast('No se pudo banear: '+e.message); }
+  writeLog('baneó del sistema de tickets a '+valor.trim()); render();
+}
+async function unbanUser(id){
+  DATA.baneos = DATA.baneos.filter(x=>x.id!==id); render();
+  try{ await supa.from('ticket_bans').delete().eq('id', id); }catch(e){}
+}
+
+/* ===================== RENDER ===================== */
+function render(){
+  const root = document.getElementById('root');
+  root.innerHTML = '';
+  root.appendChild(buildStripe());
+
+  if(!SESSION){ root.appendChild(buildLogin()); attachLoginEvents(); return; }
+
+  root.appendChild(buildTopbar());
+  const content = document.createElement('div'); content.className='content';
+
+  if(UI.loading){
+    content.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:60px 0;"><span class="spin"></span><span style="font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Cargando desde Supabase…</span></div>`;
+  } else if(UI.view==='chooser'){ content.appendChild(buildChooser()); }
+  else if(UI.console==='forms'){ content.appendChild(buildFormsConsole()); }
+  else if(UI.console==='tickets'){ content.appendChild(buildTicketsConsole()); }
+  else if(UI.console==='gestion'){ content.appendChild(buildGestionConsole()); }
+
+  root.appendChild(content);
+  if(UI.toast){ const t=document.createElement('div'); t.className='toast'; t.textContent=UI.toast; root.appendChild(t); }
+}
+
+function buildStripe(){ const d=document.createElement('div'); d.className='stripe'; return d; }
+
+function buildLogin(){
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <div class="topbar">
+    <div class="brand" style="display: inline-flex; align-items: center;"><img src="/imagenes/EA.png" alt="Logo EA" style="height: 90px; width: auto;"><div class="sep" style="width: 4px; height: 26px; background-color: #ccc; margin: 0 15px;"></div><span class="title" style="font-size: 18px; font-family: sans-serif;">Panel de Moderadores</span></div>
+      <span class="pill-db ${dbOk?'on':'off'}">${dbOk?'● Supabase conectado':'● Supabase sin conectar'}</span>
+    </div>
+    <div class="content">
+      <div class="loginbox">
+        <h3>Acceso de moderadores</h3>
+        <p>Inicia sesión con tu cuenta de moderador.</p>
+        <label>Usuario</label>
+        <input id="login_user" type="text" placeholder="Usuario" value="Marc" style="margin-bottom:14px;">
+        <label>Contraseña</label>
+        <input id="login_pass" type="password" placeholder="••••••••" style="margin-bottom:6px;">
+        ${UI.loginError ? `<div class="err">${esc(UI.loginError)}</div>` : ''}
+        <button class="btn btn-acc" id="login_btn" style="width:100%;padding:13px;margin-top:14px;font-size:13px;letter-spacing:1.5px;">Entrar</button>
+        <p style="margin-top:16px;font-family:var(--mono);font-size:10px;color:var(--dim);text-align:center;">Acceso de prueba: Marc / Marc123</p>
+      </div>
+    </div>`;
+  return wrap;
+}
+function attachLoginEvents(){
+  const btn = document.getElementById('login_btn'); if(btn) btn.onclick = doLogin;
+  const pass = document.getElementById('login_pass'); if(pass) pass.onkeydown = (e)=>{ if(e.key==='Enter') doLogin(); };
+}
+
+function buildTopbar(){
+  const div = document.createElement('div'); div.className='topbar';
+  div.innerHTML = `
+    <div class="brand">
+      <span class="logo">EV</span><div class="sep"></div>
+      <span class="title">${UI.console ? ('Consola · '+({forms:'Solicitudes',tickets:'Tickets',gestion:'Gestión'}[UI.console]||'')) : 'Panel de Moderadores'}</span>
+    </div>
+    <div class="row">
+      <span class="pill-db ${dbOk?'on':'off'}">${dbOk?'● Supabase':'● Sin conexión'}</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted2);">${esc(SESSION.user)}</span>
+      <span class="pill">👑 Game Owner</span>
+      ${UI.console ? `<button class="btn" id="btn_chooser">⇄ Consola</button>` : ''}
+      <button class="btn" id="btn_logout">Salir</button>
+    </div>`;
+  setTimeout(()=>{
+    const c=document.getElementById('btn_chooser'); if(c) c.onclick = goChooser;
+    const l=document.getElementById('btn_logout'); if(l) l.onclick = logout;
+  },0);
+  return div;
+}
+
+function buildChooser(){
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <h2 style="margin:0 0 6px;font-family:var(--head);font-weight:600;font-size:clamp(22px,4vw,30px);text-transform:uppercase;">¿Qué quieres gestionar?</h2>
+    <p style="margin:0 0 26px;color:var(--muted);">Elige una consola. Puedes cambiar cuando quieras.</p>
+    <div class="chooser-grid">
+      <button class="chooser-card" id="ch_forms" style="border-color:rgba(230,51,41,.4);">
+        <span class="chooser-icon" style="background:color-mix(in srgb,var(--accent) 16%,transparent);border:1px solid var(--accent);">📋</span>
+        <span style="font-family:var(--head);font-weight:600;font-size:19px;text-transform:uppercase;">Solicitudes</span>
+        <span style="font-size:12.5px;line-height:1.5;color:var(--muted2);">Revisa y decide solicitudes de candidatos.</span>
+      </button>
+      <button class="chooser-card" id="ch_tickets" style="border-color:rgba(37,99,235,.4);">
+        <span class="chooser-icon" style="background:color-mix(in srgb,var(--blue) 16%,transparent);border:1px solid var(--blue);">🎫</span>
+        <span style="font-family:var(--head);font-weight:600;font-size:19px;text-transform:uppercase;">Tickets</span>
+        <span style="font-size:12.5px;line-height:1.5;color:var(--muted2);">Atiende los tickets de soporte de los usuarios.</span>
+      </button>
+      <button class="chooser-card" id="ch_gestion" style="border-color:rgba(224,135,26,.4);">
+        <span class="chooser-icon" style="background:color-mix(in srgb,var(--amber) 16%,transparent);border:1px solid var(--amber);">🛡️</span>
+        <span style="font-family:var(--head);font-weight:600;font-size:19px;text-transform:uppercase;">Gestión</span>
+        <span style="font-size:12.5px;line-height:1.5;color:var(--muted2);">Turnos, ausencias, baneos, registro y equipo.</span>
+      </button>
+    </div>`;
+  setTimeout(()=>{
+    document.getElementById('ch_forms').onclick = ()=>go('forms','solicitudes');
+    document.getElementById('ch_tickets').onclick = ()=>go('tickets','tickets');
+    document.getElementById('ch_gestion').onclick = ()=>go('gestion','fichaje');
+  },0);
+  return wrap;
+}
+
+/* ---------- Consola: Solicitudes ---------- */
+function buildFormsConsole(){
+  const wrap = document.createElement('div');
+  if(UI.focusId){
+    const row = DATA.solicitudes.find(x=>x.id===UI.focusId);
+    if(!row){ UI.focusId=null; return buildFormsConsole(); }
+    const ests = [['pendiente','Pendiente','#E0871A'],['aceptada','Aceptada','#2FAE5E'],['rechazada','Rechazada','#E5484D']];
+    const myComments = DATA.comentarios.filter(c=>c.solicitud_id===row.id);
+    wrap.innerHTML = `
+      <button class="btn" id="back_list" style="margin-bottom:14px;">← Volver a la lista</button>
+      <div class="box">
+        <div class="row" style="margin-bottom:14px;">
+          <span class="num">#${row.numero}</span>
+          <span style="font-family:var(--head);font-weight:700;font-size:20px;">${esc(row.nombre)}</span>
+        </div>
+        <p style="color:var(--muted2);font-size:13px;">${esc(row.discord_username||'—')} · ${esc(row.roblox||'—')} · ${esc(row.edad||'—')} años · ${esc(row.genero||'—')}</p>
+        <p style="color:var(--text);font-size:13.5px;line-height:1.6;background:#0B0E13;border:1px solid var(--border);border-radius:9px;padding:12px 14px;">${esc(row.motivacion||'Sin motivación indicada.')}</p>
+        <div class="row" style="margin:16px 0;">
+          ${ests.map(e=>`<button class="filterbtn estbtn ${row.estado===e[0]?'on':''}" data-est="${e[0]}" style="${row.estado===e[0]?'background:'+e[2]+';border-color:'+e[2]+';':'color:'+e[2]+';border-color:'+e[2]+'66;'}">${e[1]}</button>`).join('')}
+        </div>
+        <div class="sec-title">Comentarios internos</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+          ${myComments.length ? myComments.map(c=>`<div style="background:#0B0E13;border:1px solid var(--border);border-radius:9px;padding:10px 12px;">
+              <div style="font-family:var(--mono);font-size:10.5px;color:var(--blue);margin-bottom:5px;">${esc(c.autor)} · ${fmtDate(c.created_at)}</div>
+              <div style="font-size:13.5px;color:var(--text);">${esc(c.texto)}</div></div>`).join('') : `<div style="font-family:var(--mono);font-size:11px;color:var(--dim);">Aún no hay comentarios internos.</div>`}
+        </div>
+        <div class="row">
+          <textarea id="newcmt" placeholder="Comentario interno…" style="flex:1;min-height:42px;"></textarea>
+          <button class="btn btn-blue" id="addcmt">Añadir</button>
+        </div>
+        <div style="margin-top:20px;text-align:right;">
+          <button class="btn" id="delsol" style="color:var(--red);border-color:rgba(229,72,77,.4);">Borrar solicitud</button>
+        </div>
+      </div>`;
+    setTimeout(()=>{
+      document.getElementById('back_list').onclick = ()=>{ UI.focusId=null; render(); };
+      wrap.querySelectorAll('.estbtn').forEach(b=> b.onclick = ()=> decideSolicitud(row.id, b.dataset.est));
+      document.getElementById('addcmt').onclick = ()=>{ addComentario(row.id, document.getElementById('newcmt').value); };
+      document.getElementById('delsol').onclick = ()=>{ if(confirm('¿Borrar esta solicitud? No se puede deshacer.')) deleteSolicitud(row.id); };
+    },0);
+    return wrap;
+  }
+
+  const filt = UI.tFilter;
+  const list = DATA.solicitudes.filter(x=> filt==='todas' || x.estado===filt)
+    .filter(x=> !UI.search || (x.nombre||'').toLowerCase().includes(UI.search.toLowerCase()));
+  const counts = { todas: DATA.solicitudes.length, pendiente:0, aceptada:0, rechazada:0 };
+  DATA.solicitudes.forEach(x=> counts[x.estado||'pendiente'] = (counts[x.estado||'pendiente']||0)+1 );
+  const estColor = {pendiente:'#E0871A',aceptada:'#2FAE5E',rechazada:'#E5484D'};
+  const estLabel = {pendiente:'Pendiente',aceptada:'Aceptada',rechazada:'Rechazada'};
+
+  wrap.innerHTML = `
+    <div class="row" style="margin-bottom:12px;">
+      <input id="searchbox" type="text" placeholder="Buscar por nombre…" value="${esc(UI.search)}" style="flex:1;min-width:220px;">
+      <button class="btn btn-acc" id="newsol">+ Solicitud de prueba</button>
+    </div>
+    <div class="row" style="margin-bottom:18px;">
+      ${[['todas','Todas'],['pendiente','Pendientes'],['aceptada','Aceptadas'],['rechazada','Rechazadas']].map(f=>
+        `<button class="filterbtn fbtn ${filt===f[0]?'on':''}" data-f="${f[0]}">${f[1]} <span class="badge">${counts[f[0]]||0}</span></button>`).join('')}
+    </div>
+    ${list.length===0 ? `<div style="padding:50px 0;text-align:center;font-family:var(--mono);font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);">No hay solicitudes</div>` : ''}
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${list.map(x=>`
+        <div class="listitem" data-id="${x.id}">
+          <span class="num">#${x.numero}</span>
+          <span class="chip" style="color:${estColor[x.estado||'pendiente']};background:color-mix(in srgb,${estColor[x.estado||'pendiente']} 15%,transparent);border:1px solid color-mix(in srgb,${estColor[x.estado||'pendiente']} 45%,transparent);">${estLabel[x.estado||'pendiente']}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:15px;font-weight:600;">${esc(x.nombre)}</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px;">${esc(x.roblox||'—')} · ${esc(x.discord_username||'—')}</div>
+          </div>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--dim);">${fmtDate(x.created_at)}</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--accent);">Ver →</span>
+        </div>`).join('')}
+    </div>`;
+  setTimeout(()=>{
+    document.getElementById('searchbox').oninput = (e)=>{ UI.search = e.target.value; render(); };
+    document.getElementById('newsol').onclick = async ()=>{
+      const row = { nombre:'Candidato de prueba', discord_username:'candidato', roblox:'CandidatoRP', edad:'20', genero:'Masculino', estado:'pendiente', motivacion:'Solicitud de prueba generada desde el panel.' };
+      try{ const { data } = await supa.from('solicitudes').insert(row).select(); if(data && data[0]) DATA.solicitudes.unshift(data[0]); }catch(e){ showToast('No se pudo crear: '+e.message); }
+      writeLog('creó una solicitud de prueba'); render();
+    };
+    wrap.querySelectorAll('.fbtn').forEach(b=> b.onclick = ()=>{ UI.tFilter = b.dataset.f; render(); });
+    wrap.querySelectorAll('.listitem').forEach(b=> b.onclick = ()=>{ UI.focusId = b.dataset.id; render(); });
+  },0);
+  return wrap;
+}
+
+/* ---------- Consola: Tickets ---------- */
+function buildTicketsConsole(){
+  const wrap = document.createElement('div');
+  if(UI.ticketFocus){
+    const tk = DATA.tickets.find(x=>x.id===UI.ticketFocus);
+    if(!tk){ UI.ticketFocus=null; return buildTicketsConsole(); }
+    const msgs = UI.ticketMsgs || [];
+    wrap.innerHTML = `
+      <button class="btn" id="back_tk" style="margin-bottom:14px;">← Volver a la bandeja</button>
+      <div class="row" style="margin-bottom:14px;">
+        <span class="num">#${tk.numero}</span>
+        <span style="font-family:var(--head);font-weight:600;font-size:18px;text-transform:uppercase;">${esc(tk.asunto||tk.motivo)}</span>
+        <span class="chip" style="color:${tk.estado==='cerrado'?'#AEB6C2':'#46D985'};background:${tk.estado==='cerrado'?'rgba(255,255,255,.06)':'color-mix(in srgb,#2FAE5E 16%,transparent)'};border:1px solid ${tk.estado==='cerrado'?'rgba(255,255,255,.16)':'color-mix(in srgb,#2FAE5E 45%,transparent)'};">${tk.estado==='cerrado'?'Cerrado':'Abierto'}</span>
+      </div>
+      <div class="box" style="display:flex;flex-direction:column;gap:12px;max-height:50vh;overflow:auto;margin-bottom:14px;">
+        ${msgs.length===0 ? `<div style="font-family:var(--mono);font-size:11px;color:var(--dim);">Aún no hay mensajes.</div>` : msgs.map(m=>`
+          <div style="align-self:${m.tipo==='mod'?'flex-end':'flex-start'};max-width:80%;">
+            <div style="background:${m.tipo==='mod'?'color-mix(in srgb,#2563EB 24%,#0F131A)':'#161B22'};border:1px solid ${m.tipo==='mod'?'color-mix(in srgb,#2563EB 45%,transparent)':'var(--border2)'};border-radius:14px;padding:10px 14px;font-size:13.5px;line-height:1.5;">${esc(m.texto)}</div>
+            <div style="font-family:var(--mono);font-size:9.5px;color:var(--dim);margin-top:3px;">${esc(m.autor)} · ${fmtDate(m.created_at)}</div>
+          </div>`).join('')}
+      </div>
+      ${tk.estado!=='cerrado' ? `
+      <div class="row" style="align-items:flex-end;">
+        <textarea id="tkreply" placeholder="Escribe una respuesta…" style="flex:1;min-height:50px;"></textarea>
+        <button class="btn btn-green" id="tksend" style="padding:13px 18px;">Enviar</button>
+      </div>` : ''}
+      <div class="row" style="margin-top:16px;">
+        ${tk.estado!=='cerrado' ? `<button class="btn" id="tkclose" style="color:var(--red);border-color:rgba(229,72,77,.4);">Cerrar ticket</button>` : `<button class="btn" id="tkreopen">Reabrir</button>`}
+        <button class="btn" id="tkdel" style="color:var(--red);border-color:rgba(229,72,77,.4);margin-left:auto;">Borrar ticket</button>
+      </div>`;
+    setTimeout(()=>{
+      document.getElementById('back_tk').onclick = ()=>{ UI.ticketFocus=null; render(); };
+      const sendBtn = document.getElementById('tksend');
+      if(sendBtn) sendBtn.onclick = ()=>{ sendTicketReply(tk.id, document.getElementById('tkreply').value); };
+      const closeBtn = document.getElementById('tkclose'); if(closeBtn) closeBtn.onclick = ()=> closeTicket(tk.id);
+      const reopenBtn = document.getElementById('tkreopen'); if(reopenBtn) reopenBtn.onclick = ()=> reopenTicket(tk.id);
+      document.getElementById('tkdel').onclick = ()=>{ if(confirm('¿Borrar este ticket por completo?')) deleteTicket(tk.id); };
+    },0);
+    return wrap;
+  }
+
+  const filt = UI.tkFilter;
+  const list = DATA.tickets.filter(x=> filt==='todos' || (filt==='cerrado'? x.estado==='cerrado' : x.estado!=='cerrado'));
+  wrap.innerHTML = `
+    <div class="row" style="margin-bottom:18px;">
+      ${[['abierto','Abiertos'],['cerrado','Cerrados'],['todos','Todos']].map(f=>`<button class="filterbtn tkf ${filt===f[0]?'on':''}" data-f="${f[0]}">${f[1]}</button>`).join('')}
+      <button class="btn btn-acc" id="newtk" style="margin-left:auto;">+ Ticket de prueba</button>
+    </div>
+    ${list.length===0 ? `<div style="padding:50px 0;text-align:center;font-family:var(--mono);font-size:12px;color:var(--dim);">No hay tickets aquí.</div>` : ''}
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${list.map(x=>`
+        <div class="listitem" data-id="${x.id}">
+          <span class="num">#${x.numero}</span>
+          <span class="chip" style="color:${x.estado==='cerrado'?'#AEB6C2':'#46D985'};background:${x.estado==='cerrado'?'rgba(255,255,255,.06)':'color-mix(in srgb,#2FAE5E 16%,transparent)'};border:1px solid ${x.estado==='cerrado'?'rgba(255,255,255,.16)':'color-mix(in srgb,#2FAE5E 45%,transparent)'};">${x.estado==='cerrado'?'Cerrado':'Abierto'}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:15px;font-weight:600;">${esc(x.asunto||x.motivo)}</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px;">${esc(x.nombre||'—')} · ${esc(x.discord||'—')}</div>
+          </div>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--dim);">${fmtDate(x.created_at)}</span>
+        </div>`).join('')}
+    </div>`;
+  setTimeout(()=>{
+    wrap.querySelectorAll('.tkf').forEach(b=> b.onclick = ()=>{ UI.tkFilter=b.dataset.f; render(); });
+    wrap.querySelectorAll('.listitem').forEach(b=> b.onclick = ()=> openTicketDetail(b.dataset.id));
+    document.getElementById('newtk').onclick = createTestTicket;
+  },0);
+  return wrap;
+}
+
+/* ---------- Consola: Gestión ---------- */
+function buildGestionConsole(){
+  const wrap = document.createElement('div');
+  const tabs = [['fichaje','Registro laboral'],['ausencias','Ausencias'],['baneos','Baneos'],['registro','Registro'],['equipo','Equipo']];
+  const tabsHtml = `<div class="tabs">${tabs.map(t=>`<button class="tab gtab ${UI.view===t[0]?'on':''}" data-v="${t[0]}">${t[1]}</button>`).join('')}</div>`;
+
+  let body = '';
+  if(UI.view==='fichaje'){
+    const w = turnoWorkedNow();
+    const ta = DATA.turnoActivo;
+    body = `
+      <div class="box" style="margin-bottom:20px;">
+        <div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+          <div>
+            <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;color:${ta?(ta.status==='pausado'?'#E6A94F':'#46D985'):'var(--muted)'};">
+              ${ta ? (ta.status==='pausado' ? '⏸ En pausa' : '● Trabajando') : 'Sin turno activo'}</div>
+            <div class="timerbig" id="livetimer">${fmtHMS(w)}</div>
+          </div>
+          <div class="row">
+            ${!ta ? `<button class="btn btn-green" id="t_start">▶ Empezar turno</button>` : ''}
+            ${ta && ta.status==='activo' ? `<button class="btn" style="background:color-mix(in srgb,var(--amber) 16%,#0F131A);color:var(--amber2);border:1px solid color-mix(in srgb,var(--amber) 48%,transparent);" id="t_pause">⏸ Pausar</button><button class="btn btn-red" id="t_end">■ Terminar</button>` : ''}
+            ${ta && ta.status==='pausado' ? `<button class="btn btn-green" id="t_resume">▶ Reanudar</button><button class="btn btn-red" id="t_end">■ Terminar</button>` : ''}
+          </div>
+        </div>
+      </div>
+      <div class="sec-title">Mi historial de turnos</div>
+      ${DATA.turnos.length===0 ? `<div style="font-family:var(--mono);font-size:11px;color:var(--dim);padding:10px 0;">Sin turnos registrados todavía.</div>` :
+        `<div style="display:flex;flex-direction:column;gap:8px;">${DATA.turnos.slice(0,20).map(x=>`
+          <div style="background:#0F131A;border:1px solid var(--border);border-radius:11px;padding:12px 14px;">
+            <div class="row"><span style="font-family:var(--head);font-weight:600;font-size:16px;">${fmtHoras(x.worked_seconds)}</span>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--dim);margin-left:auto;">${fmtDate(x.started_at)} → ${fmtDate(x.ended_at)}</span></div>
+            ${x.nota ? `<div style="margin-top:6px;font-size:13px;color:var(--muted2);">${esc(x.nota)}</div>` : ''}
+          </div>`).join('')}</div>`}
+    `;
+  } else if(UI.view==='ausencias'){
+    const estColor={pendiente:'#E0871A',aceptada:'#2FAE5E',denegada:'#E5484D'};
+    const estLabel={pendiente:'Pendiente',aceptada:'Aceptada',denegada:'Denegada'};
+    body = `
+      <div class="box" style="margin-bottom:20px;max-width:560px;">
+        <div class="sec-title" style="margin-bottom:12px;">Solicitar una ausencia</div>
+        <div class="row" style="margin-bottom:11px;">
+          <div style="flex:1;min-width:140px;"><label>Desde</label><input id="aus_desde" type="date"></div>
+          <div style="flex:1;min-width:140px;"><label>Hasta</label><input id="aus_hasta" type="date"></div>
+        </div>
+        <textarea id="aus_motivo" placeholder="Motivo (opcional)…" style="margin-bottom:12px;"></textarea>
+        <button class="btn btn-acc" id="aus_send">Solicitar ausencia</button>
+      </div>
+      <div class="sec-title">Solicitudes</div>
+      ${DATA.ausencias.length===0 ? `<div style="font-family:var(--mono);font-size:11px;color:var(--dim);padding:10px 0;">No hay ausencias registradas.</div>` :
+        `<div style="display:flex;flex-direction:column;gap:8px;">${DATA.ausencias.map(a=>`
+          <div style="background:#0F131A;border:1px solid var(--border);border-radius:11px;padding:13px 15px;">
+            <div class="row">
+              <span>${a.desde} → ${a.hasta}</span>
+              <span class="chip" style="color:${estColor[a.estado]};background:color-mix(in srgb,${estColor[a.estado]} 15%,transparent);border:1px solid color-mix(in srgb,${estColor[a.estado]} 45%,transparent);">${estLabel[a.estado]}</span>
+              ${a.estado==='pendiente' ? `<span style="margin-left:auto;display:flex;gap:7px;">
+                <button class="btn btn-green" data-aok="${a.id}" style="padding:7px 12px;font-size:10px;">Aceptar</button>
+                <button class="btn btn-red" data-ano="${a.id}" style="padding:7px 12px;font-size:10px;">Denegar</button></span>` :
+                `<button class="btn" data-adel="${a.id}" style="margin-left:auto;padding:7px 12px;font-size:10px;color:var(--red);border-color:rgba(229,72,77,.4);">Borrar</button>`}
+            </div>
+            ${a.motivo ? `<div style="margin-top:6px;font-size:12.5px;color:var(--muted2);">${esc(a.motivo)}</div>` : ''}
+          </div>`).join('')}</div>`}
+    `;
+  } else if(UI.view==='baneos'){
+    body = `
+      <div class="box" style="margin-bottom:20px;max-width:560px;">
+        <div class="sec-title" style="margin-bottom:12px;">Banear del sistema de tickets</div>
+        <input id="ban_valor" type="text" placeholder="Nombre de usuario o correo" style="margin-bottom:10px;">
+        <input id="ban_motivo" type="text" placeholder="Motivo (opcional)" style="margin-bottom:10px;">
+        <div class="row" style="margin-bottom:12px;">
+          <label style="margin:0;">Duración (días, 0 = permanente)</label>
+          <input id="ban_dias" type="number" value="7" style="width:100px;">
+        </div>
+        <button class="btn btn-red" id="ban_send">Banear</button>
+      </div>
+      <div class="sec-title">Baneos activos</div>
+      ${DATA.baneos.length===0 ? `<div style="font-family:var(--mono);font-size:11px;color:var(--dim);padding:10px 0;">No hay baneos.</div>` :
+        `<div style="display:flex;flex-direction:column;gap:8px;max-width:600px;">${DATA.baneos.map(b=>`
+          <div style="background:#14181F;border:1px solid var(--border);border-radius:11px;padding:12px 15px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13.5px;font-weight:600;">${esc(b.valor)}</div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;">${b.hasta?('Hasta '+fmtDate(b.hasta)):'Permanente'} · ${esc(b.por)}</div>
+              ${b.motivo ? `<div style="font-size:12px;color:var(--muted2);margin-top:3px;">${esc(b.motivo)}</div>` : ''}
+            </div>
+            <button class="btn" data-unban="${b.id}">Quitar</button>
+          </div>`).join('')}</div>`}
+    `;
+  } else if(UI.view==='registro'){
+    body = DATA.logs.length===0 ? `<div style="font-family:var(--mono);font-size:11px;color:var(--dim);padding:10px 0;">Aún no hay acciones registradas.</div>` :
+      `<div style="display:flex;flex-direction:column;gap:8px;">${DATA.logs.slice(0,200).map(l=>`
+        <div style="display:flex;align-items:flex-start;gap:12px;background:#0F131A;border:1px solid var(--border);border-radius:9px;padding:11px 14px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--amber);margin-top:5px;flex:0 0 auto;"></span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13.5px;color:var(--text);"><span style="color:var(--blue);font-weight:600;">${esc(l.autor)}</span> ${esc(l.accion)}</div>
+            ${l.detalle ? `<div style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px;">${esc(l.detalle)}</div>` : ''}
+          </div>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--dim);white-space:nowrap;">${fmtDate(l.created_at)}</span>
+        </div>`).join('')}</div>`;
+  } else if(UI.view==='equipo'){
+    body = DATA.equipo.length===0 ? `<div style="font-family:var(--mono);font-size:11px;color:var(--dim);padding:10px 0;">No hay moderadores registrados.</div>` :
+      `<div style="display:flex;flex-direction:column;gap:8px;">${DATA.equipo.map(m=>`
+      <div style="display:flex;align-items:center;gap:12px;background:#0F131A;border:1px solid var(--border);border-radius:9px;padding:12px 14px;">
+        <span style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#2A3340;color:var(--muted2);font-family:var(--mono);font-weight:600;">${esc((m.nombre||'?').charAt(0).toUpperCase())}</span>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;">${esc(m.nombre||m.email)}</div>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--muted);">${esc(m.email)}</div>
+        </div>
+        <span class="chip" style="color:var(--amber2);background:color-mix(in srgb,var(--amber) 15%,transparent);border:1px solid color-mix(in srgb,var(--amber) 40%,transparent);">${m.rango==='game_owner'?'Game Owner':(m.rango||'Moderador')}</span>
+      </div>`).join('')}</div>`;
+  }
+
+  wrap.innerHTML = tabsHtml + `<div style="margin-top:18px;">${body}</div>`;
+  setTimeout(()=>{
+    wrap.querySelectorAll('.gtab').forEach(b=> b.onclick = ()=>{ UI.view=b.dataset.v; render(); });
+    const ts=document.getElementById('t_start'); if(ts) ts.onclick=empezarTurno;
+    const tp=document.getElementById('t_pause'); if(tp) tp.onclick=pausarTurno;
+    const tr=document.getElementById('t_resume'); if(tr) tr.onclick=reanudarTurno;
+    const te=document.getElementById('t_end'); if(te) te.onclick=()=>{ const nota=prompt('¿Qué hiciste en este turno? (opcional)')||''; terminarTurno(nota); };
+    const as=document.getElementById('aus_send'); if(as) as.onclick=()=>{ solicitarAusencia(document.getElementById('aus_desde').value, document.getElementById('aus_hasta').value, document.getElementById('aus_motivo').value); };
+    wrap.querySelectorAll('[data-aok]').forEach(b=> b.onclick=()=>decidirAusencia(b.dataset.aok,'aceptada'));
+    wrap.querySelectorAll('[data-ano]').forEach(b=> b.onclick=()=>decidirAusencia(b.dataset.ano,'denegada'));
+    wrap.querySelectorAll('[data-adel]').forEach(b=> b.onclick=()=>borrarAusencia(b.dataset.adel));
+    const bs=document.getElementById('ban_send'); if(bs) bs.onclick=()=>{ banUser(document.getElementById('ban_valor').value, document.getElementById('ban_motivo').value, parseInt(document.getElementById('ban_dias').value,10)||0); };
+    wrap.querySelectorAll('[data-unban]').forEach(b=> b.onclick=()=>unbanUser(b.dataset.unban));
+  },0);
+  return wrap;
+}
+
+/* ---------- Live ticker para el cronómetro de turno ---------- */
+setInterval(()=>{ if(SESSION && UI.console==='gestion' && UI.view==='fichaje' && DATA.turnoActivo && !UI.loading){ const el=document.getElementById('livetimer'); if(el) el.textContent = fmtHMS(turnoWorkedNow()); } }, 1000);
+
+initSupabase();
+render();
+</script>
+</body>
+</html>
